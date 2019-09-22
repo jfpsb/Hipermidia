@@ -7,12 +7,15 @@
         mc:Ignorable="d"
         Title="SMIL Exemplo 1"
         Height="450"
-        Width="800"
-        Loaded="Window_Loaded"
-      >
-    <Grid>
-
-        <Image Name="imageHolder" />
-
-    </Grid>
+        Width="800">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Carregar SMIL"
+                      Click="CarregarSMIL_Click" />
+            <MenuItem Header="Sobre" />
+        </Menu>
+        <Grid>
+            <Image Name="imageHolder" />
+        </Grid>
+    </DockPanel>
 </Window>
