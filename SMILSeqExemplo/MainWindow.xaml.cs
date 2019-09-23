@@ -56,9 +56,11 @@ namespace SMILSeqExemplo
                 {
                     if (imgNode.Name == "img")
                     {
-                        Imagem imagem = new Imagem();
-                        imagem.BitmapImage = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(filename), imgNode.Attributes["src"].Value)));
-                        imagem.Delay = int.Parse(imgNode.Attributes["dur"].Value.Replace("s", ""));
+                        Imagem imagem = new Imagem
+                        {
+                            BitmapImage = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(filename), imgNode.Attributes["src"].Value))),
+                            Delay = int.Parse(imgNode.Attributes["dur"].Value.Replace("s", ""))
+                        };
                         controller.AddImagem(imagem);
                     }
                 }
