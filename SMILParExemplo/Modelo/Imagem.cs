@@ -2,7 +2,7 @@
 
 namespace SMILSeqExemplo.Modelo
 {
-    class Imagem
+    public class Imagem
     {
         public BitmapImage BitmapImage { get; set; }
         public int Delay { get; set; }

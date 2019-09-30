@@ -44,47 +44,39 @@ namespace SMILParExemplo
             if (xmlDocument.DocumentElement.Name == "smil")
             {
                 XmlNodeList smilNodeList = xmlDocument.SelectNodes("smil");
-                Render(smilNodeList, null, 0);
+                Render(smilNodeList, null);
             }
         }
 
-        private async void Render(XmlNodeList nodeList, Object wrapper, int hierarquia)
+        private void Render(XmlNodeList nodeList, Object container)
         {
             foreach (XmlNode node in nodeList)
             {
                 switch (node.Name)
                 {
                     case "smil":
-                        Render(node.ChildNodes, null, 0);
+                        Render(node.ChildNodes, null);
                         break;
                     case "body":
-                        Render(node.ChildNodes, null, 0);
+                        Render(node.ChildNodes, null);
                         break;
                     case "par":
-                        Grid grid = new Grid();
-                        grid.HorizontalAlignment = HorizontalAlignment.Center;
-                        grid.Name = "Grid" + hierarquia;
+                        int quantFilhos = node.ChildNodes.Count;
+                        int numLin = quantFilhos / 2;
 
-                        ColumnDefinition gridCol1 = new ColumnDefinition();
-                        ColumnDefinition gridCol2 = new ColumnDefinition();
-                        RowDefinition row1 = new RowDefinition();
-                        RowDefinition row2 = new RowDefinition();
+                        WrapPanel wrapPanel = new WrapPanel
+                        {
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            ItemWidth = 600,
+                            ItemHeight = 400
+                        };
 
-                        gridCol1.MaxWidth = gridCol2.MaxWidth = 500;
-                        gridCol1.MinWidth = gridCol2.MinWidth = 400;
-                        row1.MaxHeight = row2.MaxHeight = 400;
-                        row1.MinHeight = row2.MinHeight = 200;
+                        dockPanel.Children.Add(wrapPanel);
 
-                        grid.ColumnDefinitions.Add(gridCol1);
-                        grid.ColumnDefinitions.Add(gridCol2);
-                        grid.RowDefinitions.Add(row1);
-                        grid.RowDefinitions.Add(row2);
-
-                        dockPanel.Children.Add(grid);
-                        Render(node.ChildNodes, grid, hierarquia + 1);
+                        Render(node.ChildNodes, wrapPanel);
                         break;
                     case "img":
-                        Grid wrapperGrid = (Grid)wrapper;
+                        WrapPanel wrapper = (WrapPanel)container;
                         Image imageControl = new Image();
                         imageControl.Stretch = System.Windows.Media.Stretch.Fill;
                         Imagem imagem = new Imagem
@@ -94,31 +86,8 @@ namespace SMILParExemplo
                         };
                         imageControl.Source = imagem.BitmapImage;
 
-                        int count = wrapperGrid.Children.Count;
-
-                        if (count == 0)
-                        {
-                            Grid.SetColumn(imageControl, 0);
-                            Grid.SetRow(imageControl, 0);
-                        }
-                        else if (count == 1)
-                        {
-                            Grid.SetColumn(imageControl, 1);
-                            Grid.SetRow(imageControl, 0);
-                        }
-                        else if (count == 2)
-                        {
-                            Grid.SetColumn(imageControl, 0);
-                            Grid.SetRow(imageControl, 1);
-                        }
-                        else
-                        {
-                            Grid.SetColumn(imageControl, 1);
-                            Grid.SetRow(imageControl, 1);
-                        }
-
-                        //wrapperGrid.Children.Add(imageControl);
-                        await AdicionarImagem(wrapperGrid, imageControl, imagem.Delay);
+                        Thread thread = new Thread(() => AdicionarImagem(wrapper, imageControl, imagem));
+                        thread.Start();
 
                         break;
                     default:
@@ -127,24 +96,22 @@ namespace SMILParExemplo
             }
         }
 
-        public Task AdicionarImagem(Grid grid, Image image, int delay)
+        public void AdicionarImagem(WrapPanel wrapPanel, Image image, Imagem imagem)
         {
-            Task task = Task.Run(() =>
+            wrapPanel.Dispatcher.BeginInvoke(new Action(() =>
             {
-                grid.Dispatcher.BeginInvoke(new Action(() =>
+                wrapPanel.Children.Add(image);
+            }));
+
+            if (imagem.Delay != 0)
+            {
+                Thread.Sleep(imagem.Delay * 1000);
+
+                wrapPanel.Dispatcher.BeginInvoke(new Action(() =>
                 {
-                    grid.Children.Add(image);
+                    wrapPanel.Children.Remove(image);
                 }));
-
-                Thread.Sleep(1000 * delay);
-
-                //grid.Dispatcher.BeginInvoke(new Action(() =>
-                //{
-                //    grid.Children.Remove(image);
-                //}));
-            });
-
-            return task;
+            }
         }
     }
 }
