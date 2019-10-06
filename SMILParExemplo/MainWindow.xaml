@@ -9,13 +9,16 @@
         Height="600"
         Width="800"
         WindowStartupLocation="CenterScreen">
-    <ScrollViewer>
-        <DockPanel Name="dockPanel">
-            <Menu DockPanel.Dock="Top">
-                <MenuItem Header="Carregar SMIL"
-                          Click="CarregarSMIL_Click" />
-                <MenuItem Header="Sobre" />
-            </Menu>
-        </DockPanel>
-    </ScrollViewer>
+    <DockPanel Name="dockPanel">
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Carregar SMIL"
+                      Click="CarregarSMIL_Click" />
+            <MenuItem Header="Sobre" />
+        </Menu>
+        <ScrollViewer>
+            <StackPanel Name="stackPanel">
+                
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
 </Window>

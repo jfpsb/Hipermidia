@@ -1,10 +1,10 @@
 ﻿using Microsoft.Win32;
-using SMILSeqExemplo.Controller;
 using SMILSeqExemplo.Modelo;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -44,21 +44,58 @@ namespace SMILParExemplo
             if (xmlDocument.DocumentElement.Name == "smil")
             {
                 XmlNodeList smilNodeList = xmlDocument.SelectNodes("smil");
-                Render(smilNodeList, null);
+                Parse(smilNodeList, null);
             }
         }
 
-        private void Render(XmlNodeList nodeList, Object container)
+        private void Parse(XmlNodeList nodeList, Object container)
         {
             foreach (XmlNode node in nodeList)
             {
                 switch (node.Name)
                 {
                     case "smil":
-                        Render(node.ChildNodes, null);
+                        Parse(node.ChildNodes, null);
                         break;
                     case "body":
-                        Render(node.ChildNodes, null);
+                        Parse(node.ChildNodes, null);
+                        break;
+                    case "seq":
+                        XmlNodeList tags = node.ChildNodes;
+                        List<int> durs = new List<int>();
+
+                        if (tags.Count > 0)
+                        {
+                            int dur = 0;
+
+                            if (node.Attributes.Count > 0)
+                            {
+                                dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
+                                durs.Add(dur);
+                            }
+
+                            WrapPanel gridSeqPanel = new WrapPanel
+                            {
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            };
+
+                            stackPanel.Children.Add(gridSeqPanel);
+
+                            Parse(tags, gridSeqPanel);
+
+                            Thread t = new Thread(() =>
+                            {
+                                while(true)
+                                {
+                                    foreach (FrameworkElement f in gridSeqPanel.Children)
+                                    {
+
+                                    }
+                                }
+                            });
+                            t.Start();
+                        }
+
                         break;
                     case "par":
                         int quantFilhos = node.ChildNodes.Count;
@@ -73,7 +110,7 @@ namespace SMILParExemplo
 
                         dockPanel.Children.Add(wrapPanel);
 
-                        Render(node.ChildNodes, wrapPanel);
+                        Parse(node.ChildNodes, wrapPanel);
                         break;
                     case "img":
                         WrapPanel wrapper = (WrapPanel)container;
@@ -84,10 +121,10 @@ namespace SMILParExemplo
                             BitmapImage = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value))),
                             Delay = int.Parse(node.Attributes["dur"].Value.Replace("s", ""))
                         };
+
                         imageControl.Source = imagem.BitmapImage;
 
-                        Thread thread = new Thread(() => AdicionarImagem(wrapper, imageControl, imagem));
-                        thread.Start();
+                        AdicionarImagem(wrapper, imageControl, imagem);
 
                         break;
                     default:
@@ -96,22 +133,14 @@ namespace SMILParExemplo
             }
         }
 
-        public void AdicionarImagem(WrapPanel wrapPanel, Image image, Imagem imagem)
+        public void AdicionarImagem(WrapPanel grid, Image image, Imagem imagem)
         {
-            wrapPanel.Dispatcher.BeginInvoke(new Action(() =>
+            grid.Dispatcher.BeginInvoke(new Action(() =>
             {
-                wrapPanel.Children.Add(image);
+
             }));
 
-            if (imagem.Delay != 0)
-            {
-                Thread.Sleep(imagem.Delay * 1000);
-
-                wrapPanel.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    wrapPanel.Children.Remove(image);
-                }));
-            }
+            grid.Children.Add(image);
         }
     }
 }
