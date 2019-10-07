@@ -16,6 +16,7 @@ namespace SMILParExemplo
     /// </summary>
     public partial class MainWindow : Window
     {
+        private XmlDocument xmlDocument;
         private string dir;
         public MainWindow()
         {
@@ -36,18 +37,18 @@ namespace SMILParExemplo
 
         private void CarregaXml(string filename)
         {
-            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument = new XmlDocument();
 
             xmlDocument.Load(filename);
 
             if (xmlDocument.DocumentElement.Name == "smil")
             {
-                XmlNodeList smilNodeList = xmlDocument.SelectNodes("smil");
                 XmlNodeList bodyNodeList = xmlDocument.SelectNodes("smil/body");
-                //Parse(smilNodeList, stackPanel);
 
-                List<Container> lista = P(bodyNodeList[0].ChildNodes, null);
+                //Retorna uma lista das tags dentro de body abstraídas em um panel gráfico
+                List<Container> lista = Parse(bodyNodeList[0].ChildNodes, null);
 
+                //Para cada tag encontrada em body
                 foreach (Container container in lista)
                 {
                     container.Thread?.Start();
@@ -56,10 +57,12 @@ namespace SMILParExemplo
             }
         }
 
-        private List<Container> P(XmlNodeList nodeList, Panel panel)
+        private List<Container> Parse(XmlNodeList nodeList, Panel panel)
         {
+            //Lista de containers. Um Container contém um item gráfico, uma thread e a dur da tag
             List<Container> uiElementList = new List<Container>();
 
+            //Para cada tag xml na lista
             foreach (XmlNode node in nodeList)
             {
                 switch (node.Name)
@@ -67,12 +70,17 @@ namespace SMILParExemplo
                     case "seq":
                         Grid grid = new Grid();
 
+                        //Container com panel do seq atual
                         Container seqContainer = new Container();
+                        //Tags contidas neste seq
                         XmlNodeList innerSeqTags = node.ChildNodes;
-                        List<Container> innerSeqContainers = P(innerSeqTags, grid);
+                        //Containers criados a partir dos nós internos do seq
+                        List<Container> innerSeqContainers = Parse(innerSeqTags, grid);
 
+                        //Guardo o panel no container
                         seqContainer.UIElement = grid;
 
+                        //Se houver atributo dur eu leio, se não uso os durs dos nós interiores
                         if (node.Attributes["dur"] != null)
                         {
                             seqContainer.Dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
@@ -95,8 +103,10 @@ namespace SMILParExemplo
                             {
                                 foreach (Container container in innerSeqContainers)
                                 {
+                                    //Para seq dentro de seq, inicia a thread na sequência do itens
                                     container.Thread?.Start();
 
+                                    //Coloca imagem no grid
                                     grid.Dispatcher.Invoke(new Action(() =>
                                     {
                                         if (container != null)
@@ -106,22 +116,27 @@ namespace SMILParExemplo
                                         }
                                     }));
 
+                                    //Tempo de atraso usando dur
                                     if (container != null)
                                     {
                                         Thread.Sleep(container.Dur * 1000);
                                     }
                                 }
 
+                                //Limpa panel ao final
                                 grid.Dispatcher.Invoke(new Action(() =>
                                 {
                                     grid.Children.Clear();
                                 }));
                             });
 
+                            //Thread encerra ao fechar telar
                             thread.IsBackground = true;
+                            //Guardo thread no container
                             seqContainer.Thread = thread;
                         }
 
+                        //Adiciono container na lista de containers
                         uiElementList.Add(seqContainer);
 
                         break;
@@ -134,12 +149,17 @@ namespace SMILParExemplo
                             HorizontalAlignment = HorizontalAlignment.Center
                         };
 
+                        //Container para tag par
                         Container parContainer = new Container();
+                        //Tags internas deste par
                         XmlNodeList innerParTags = node.ChildNodes;
-                        List<Container> innerParContainers = P(innerParTags, wrapPanel);
+                        //Containers criados usando tags internas como base
+                        List<Container> innerParContainers = Parse(innerParTags, wrapPanel);
 
+                        //Atribui panel no container
                         parContainer.UIElement = wrapPanel;
 
+                        //Se a tag par possuir dur eu leio, se não pego o menor dur das tags internas
                         if (node.Attributes["dur"] != null)
                         {
                             parContainer.Dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
@@ -163,37 +183,46 @@ namespace SMILParExemplo
                             {
                                 foreach (Container container in innerParContainers)
                                 {
+                                    //Inicia thread se container possuir (caso um seq dentro de par)
                                     container.Thread?.Start();
 
                                     wrapPanel.Dispatcher.Invoke(new Action(() =>
                                     {
                                         if (container != null)
                                         {
+                                            //Adicionar elementos gráficos todos de uma vez
                                             wrapPanel.Children.Add(container.UIElement);
                                         }
                                     }));
                                 }
                             });
 
+                            //Encerra thread se fechar janela
                             thread.IsBackground = true;
+                            //Atribui thread no container
                             parContainer.Thread = thread;
                         }
 
+                        //Adiciona container na lista
                         uiElementList.Add(parContainer);
 
                         break;
                     case "img":
                         Container imgContainer = new Container();
 
+                        //Cria elemento gráfico de imagem
                         Image image = new Image
                         {
                             Stretch = System.Windows.Media.Stretch.Fill,
                             Source = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value)))
                         };
 
+                        //Atribui no container
                         imgContainer.UIElement = image;
+                        //Atribui dur
                         imgContainer.Dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
 
+                        //Adicionar na lista
                         uiElementList.Add(imgContainer);
 
                         break;
@@ -203,97 +232,13 @@ namespace SMILParExemplo
             return uiElementList;
         }
 
-        private void Grid_Loaded(object sender, RoutedEventArgs e)
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
-        }
-
-        private void Parse(XmlNodeList nodeList, Panel container)
-        {
-            foreach (XmlNode node in nodeList)
+            if (xmlDocument != null)
             {
-                switch (node.Name)
-                {
-                    case "smil":
-                        Parse(node.ChildNodes, container);
-                        break;
-                    case "body":
-                        Parse(node.ChildNodes, stackPanel);
-                        break;
-                    case "seq":
-                        Grid grid = new Grid()
-                        {
-                            HorizontalAlignment = HorizontalAlignment.Center
-                        };
-
-                        XmlNodeList innerTags = node.ChildNodes;
-                        List<UIElement> containers = new List<UIElement>();
-
-                        foreach (XmlNode innerNode in innerTags)
-                        {
-                            if (innerNode.ChildNodes.Count > 0)
-                            {
-                                int count = grid.Children.Count;
-                                Parse(innerNode.ChildNodes, grid);
-                                containers.Add(grid.Children[count]);
-                            }
-                            else
-                            {
-                                containers.Add(Parse2(innerNode));
-                            }
-                        }
-
-                        Thread thread = new Thread(() =>
-                        {
-                            while (true)
-                            {
-                                foreach (UIElement uie in containers)
-                                {
-                                    grid.Dispatcher.Invoke(new Action(() =>
-                                    {
-                                        if (uie != null)
-                                        {
-                                            grid.Children.Add(uie);
-                                        }
-                                    }));
-
-                                    if (uie != null)
-                                        Thread.Sleep(2000);
-                                }
-
-                                grid.Dispatcher.Invoke(new Action(() =>
-                                {
-                                    grid.Children.Clear();
-                                }));
-                            }
-                        });
-
-                        container.Children.Add(grid);
-
-                        thread.IsBackground = true;
-                        thread.Start();
-
-                        break;
-                    default:
-                        Parse(node.ChildNodes, null);
-                        break;
-                }
-            }
-        }
-
-        private FrameworkElement Parse2(XmlNode node)
-        {
-            switch (node.Name)
-            {
-                case "img":
-                    Image imageContainer = new Image();
-
-                    imageContainer.Stretch = System.Windows.Media.Stretch.Fill;
-                    imageContainer.Source = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value)));
-
-                    return imageContainer;
-                default:
-                    return null;
+                XmlNodeList headNodeList = xmlDocument.SelectNodes("smil/head");
+                Sobre sobre = new Sobre(headNodeList[0].ChildNodes);
+                sobre.ShowDialog();
             }
         }
     }

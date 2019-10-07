@@ -13,7 +13,8 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="Carregar SMIL"
                       Click="CarregarSMIL_Click" />
-            <MenuItem Header="Sobre" />
+            <MenuItem Header="Sobre"
+                      Click="MenuItem_Click" />
         </Menu>
         <ScrollViewer>
             <StackPanel Name="stackPanel">
