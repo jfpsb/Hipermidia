@@ -7,8 +7,9 @@
         mc:Ignorable="d"
         Title="Sobre"
         Height="450"
-        Width="800">
+        Width="800"
+        WindowStartupLocation="CenterScreen">
     <StackPanel Name="stackPanel">
-        
+
     </StackPanel>
 </Window>
