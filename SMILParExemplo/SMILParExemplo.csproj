@@ -70,8 +70,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Modelo\Imagem.cs" />
-    <Compile Include="Modelo\SMIL.cs" />
+    <Compile Include="Modelo\Container.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

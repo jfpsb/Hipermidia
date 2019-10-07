@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:SMILParExemplo"
         mc:Ignorable="d"
         Title="SMIL Par Exemplo"
-        Height="600"
-        Width="800"
+        Height="700"
+        Width="1080"
         WindowStartupLocation="CenterScreen">
     <DockPanel Name="dockPanel">
         <Menu DockPanel.Dock="Top">
@@ -17,7 +17,7 @@
         </Menu>
         <ScrollViewer>
             <StackPanel Name="stackPanel">
-                
+
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

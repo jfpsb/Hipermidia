@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using SMILParExemplo.Modelo;
 using SMILSeqExemplo.Modelo;
 using System;
 using System.Collections.Generic;
@@ -44,103 +45,258 @@ namespace SMILParExemplo
             if (xmlDocument.DocumentElement.Name == "smil")
             {
                 XmlNodeList smilNodeList = xmlDocument.SelectNodes("smil");
-                Parse(smilNodeList, null);
+                XmlNodeList bodyNodeList = xmlDocument.SelectNodes("smil/body");
+                //Parse(smilNodeList, stackPanel);
+
+                List<Container> lista = P(bodyNodeList[0].ChildNodes, null);
+
+                foreach (Container container in lista)
+                {
+                    container.Thread?.Start();
+                    stackPanel.Children.Add(container.UIElement);
+                }
             }
         }
 
-        private void Parse(XmlNodeList nodeList, Object container)
+        private List<Container> P(XmlNodeList nodeList, Panel panel)
+        {
+            List<Container> uiElementList = new List<Container>();
+
+            foreach (XmlNode node in nodeList)
+            {
+                switch (node.Name)
+                {
+                    case "seq":
+                        Grid grid = new Grid();
+
+                        Container seqContainer = new Container();
+                        XmlNodeList innerSeqTags = node.ChildNodes;
+                        List<Container> innerSeqContainers = P(innerSeqTags, grid);
+
+                        seqContainer.UIElement = grid;
+
+                        if (node.Attributes["dur"] != null)
+                        {
+                            seqContainer.Dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
+                        }
+                        else
+                        {
+                            int dur = 0;
+
+                            foreach (Container c in innerSeqContainers)
+                            {
+                                dur += c.Dur;
+                            }
+
+                            seqContainer.Dur = dur;
+                        }
+
+                        if (innerSeqTags.Count > 0)
+                        {
+                            Thread thread = new Thread(() =>
+                            {
+                                foreach (Container container in innerSeqContainers)
+                                {
+                                    container.Thread?.Start();
+
+                                    grid.Dispatcher.Invoke(new Action(() =>
+                                    {
+                                        if (container != null)
+                                        {
+                                            grid.Children.Clear();
+                                            grid.Children.Add(container.UIElement);
+                                        }
+                                    }));
+
+                                    if (container != null)
+                                    {
+                                        Thread.Sleep(container.Dur * 1000);
+                                    }
+                                }
+
+                                grid.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    grid.Children.Clear();
+                                }));
+                            });
+
+                            thread.IsBackground = true;
+                            seqContainer.Thread = thread;
+                        }
+
+                        uiElementList.Add(seqContainer);
+
+                        break;
+                    case "par":
+                        WrapPanel wrapPanel = new WrapPanel()
+                        {
+                            ItemHeight = 500,
+                            ItemWidth = 700,
+                            Orientation = Orientation.Horizontal,
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        };
+
+                        Container parContainer = new Container();
+                        XmlNodeList innerParTags = node.ChildNodes;
+                        List<Container> innerParContainers = P(innerParTags, wrapPanel);
+
+                        parContainer.UIElement = wrapPanel;
+
+                        if (node.Attributes["dur"] != null)
+                        {
+                            parContainer.Dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
+                        }
+                        else
+                        {
+                            int dur = innerParContainers[0].Dur;
+
+                            foreach (Container c in innerParContainers)
+                            {
+                                if (c.Dur < dur)
+                                    dur = c.Dur;
+                            }
+
+                            parContainer.Dur = dur;
+                        }
+
+                        if (innerParTags.Count > 0)
+                        {
+                            Thread thread = new Thread(() =>
+                            {
+                                foreach (Container container in innerParContainers)
+                                {
+                                    container.Thread?.Start();
+
+                                    wrapPanel.Dispatcher.Invoke(new Action(() =>
+                                    {
+                                        if (container != null)
+                                        {
+                                            wrapPanel.Children.Add(container.UIElement);
+                                        }
+                                    }));
+                                }
+                            });
+
+                            thread.IsBackground = true;
+                            parContainer.Thread = thread;
+                        }
+
+                        uiElementList.Add(parContainer);
+
+                        break;
+                    case "img":
+                        Container imgContainer = new Container();
+
+                        Image image = new Image
+                        {
+                            Stretch = System.Windows.Media.Stretch.Fill,
+                            Source = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value)))
+                        };
+
+                        imgContainer.UIElement = image;
+                        imgContainer.Dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
+
+                        uiElementList.Add(imgContainer);
+
+                        break;
+                }
+            }
+
+            return uiElementList;
+        }
+
+        private void Grid_Loaded(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Parse(XmlNodeList nodeList, Panel container)
         {
             foreach (XmlNode node in nodeList)
             {
                 switch (node.Name)
                 {
                     case "smil":
-                        Parse(node.ChildNodes, null);
+                        Parse(node.ChildNodes, container);
                         break;
                     case "body":
-                        Parse(node.ChildNodes, null);
+                        Parse(node.ChildNodes, stackPanel);
                         break;
                     case "seq":
-                        XmlNodeList tags = node.ChildNodes;
-                        List<int> durs = new List<int>();
-
-                        if (tags.Count > 0)
+                        Grid grid = new Grid()
                         {
-                            int dur = 0;
+                            HorizontalAlignment = HorizontalAlignment.Center
+                        };
 
-                            if (node.Attributes.Count > 0)
+                        XmlNodeList innerTags = node.ChildNodes;
+                        List<UIElement> containers = new List<UIElement>();
+
+                        foreach (XmlNode innerNode in innerTags)
+                        {
+                            if (innerNode.ChildNodes.Count > 0)
                             {
-                                dur = int.Parse(node.Attributes["dur"].Value.Replace("s", ""));
-                                durs.Add(dur);
+                                int count = grid.Children.Count;
+                                Parse(innerNode.ChildNodes, grid);
+                                containers.Add(grid.Children[count]);
                             }
-
-                            WrapPanel gridSeqPanel = new WrapPanel
+                            else
                             {
-                                HorizontalAlignment = HorizontalAlignment.Center
-                            };
-
-                            stackPanel.Children.Add(gridSeqPanel);
-
-                            Parse(tags, gridSeqPanel);
-
-                            Thread t = new Thread(() =>
-                            {
-                                while(true)
-                                {
-                                    foreach (FrameworkElement f in gridSeqPanel.Children)
-                                    {
-
-                                    }
-                                }
-                            });
-                            t.Start();
+                                containers.Add(Parse2(innerNode));
+                            }
                         }
 
-                        break;
-                    case "par":
-                        int quantFilhos = node.ChildNodes.Count;
-                        int numLin = quantFilhos / 2;
-
-                        WrapPanel wrapPanel = new WrapPanel
+                        Thread thread = new Thread(() =>
                         {
-                            HorizontalAlignment = HorizontalAlignment.Center,
-                            ItemWidth = 600,
-                            ItemHeight = 400
-                        };
+                            while (true)
+                            {
+                                foreach (UIElement uie in containers)
+                                {
+                                    grid.Dispatcher.Invoke(new Action(() =>
+                                    {
+                                        if (uie != null)
+                                        {
+                                            grid.Children.Add(uie);
+                                        }
+                                    }));
 
-                        dockPanel.Children.Add(wrapPanel);
+                                    if (uie != null)
+                                        Thread.Sleep(2000);
+                                }
 
-                        Parse(node.ChildNodes, wrapPanel);
-                        break;
-                    case "img":
-                        WrapPanel wrapper = (WrapPanel)container;
-                        Image imageControl = new Image();
-                        imageControl.Stretch = System.Windows.Media.Stretch.Fill;
-                        Imagem imagem = new Imagem
-                        {
-                            BitmapImage = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value))),
-                            Delay = int.Parse(node.Attributes["dur"].Value.Replace("s", ""))
-                        };
+                                grid.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    grid.Children.Clear();
+                                }));
+                            }
+                        });
 
-                        imageControl.Source = imagem.BitmapImage;
+                        container.Children.Add(grid);
 
-                        AdicionarImagem(wrapper, imageControl, imagem);
+                        thread.IsBackground = true;
+                        thread.Start();
 
                         break;
                     default:
+                        Parse(node.ChildNodes, null);
                         break;
                 }
             }
         }
 
-        public void AdicionarImagem(WrapPanel grid, Image image, Imagem imagem)
+        private FrameworkElement Parse2(XmlNode node)
         {
-            grid.Dispatcher.BeginInvoke(new Action(() =>
+            switch (node.Name)
             {
+                case "img":
+                    Image imageContainer = new Image();
 
-            }));
+                    imageContainer.Stretch = System.Windows.Media.Stretch.Fill;
+                    imageContainer.Source = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value)));
 
-            grid.Children.Add(image);
+                    return imageContainer;
+                default:
+                    return null;
+            }
         }
     }
 }
