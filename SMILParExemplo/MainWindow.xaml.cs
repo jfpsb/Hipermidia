@@ -47,7 +47,7 @@ namespace SMILParExemplo
             {
                 XmlNodeList bodyNodeList = xmlDocument.SelectNodes("smil/body");
 
-                //Retorna uma lista das tags dentro de body abstraídas em um panel gráfico
+                //Retorna uma lista das tags dentro de body
                 List<Container> lista = Parse(bodyNodeList[0].ChildNodes, null);
 
                 //Para cada tag encontrada em body
