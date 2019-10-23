@@ -50,12 +50,40 @@ namespace SMILParExemplo
                 //Retorna uma lista das tags dentro de body
                 List<Container> lista = Parse(bodyNodeList[0].ChildNodes, null);
 
-                //Para cada tag encontrada em body
-                foreach (Container container in lista)
+                // Thread do body
+                Thread thread = new Thread(() =>
                 {
-                    container.Thread?.Start();
-                    stackPanel.Children.Add(container.UIElement);
-                }
+                    //Para cada tag encontrada em body
+                    foreach (Container container in lista)
+                    {
+                        // Inicia thread do container se possuir
+                        container.Thread?.Start();
+
+                        stackPanel.Dispatcher.Invoke(new Action(() =>
+                        {
+                            if (container != null)
+                            {
+                                stackPanel.Children.Clear();
+                                stackPanel.Children.Add(container.UIElement);
+                            }
+                        }));
+
+                        // Tempo de atraso usando dur
+                        if (container != null)
+                        {
+                            Thread.Sleep(container.Dur * 1000);
+                        }
+                    }
+
+                    //Limpa panel ao final
+                    stackPanel.Dispatcher.Invoke(new Action(() =>
+                    {
+                        stackPanel.Children.Clear();
+                    }));
+                });
+
+                thread.IsBackground = true;
+                thread.Start();
             }
         }
 
@@ -168,15 +196,18 @@ namespace SMILParExemplo
                         }
                         else
                         {
-                            int dur = innerParContainers[0].Dur;
-
-                            foreach (Container c in innerParContainers)
+                            if (innerParContainers.Count > 0)
                             {
-                                if (c.Dur < dur)
-                                    dur = c.Dur;
-                            }
+                                int dur = innerParContainers[0].Dur;
 
-                            parContainer.Dur = dur;
+                                foreach (Container c in innerParContainers)
+                                {
+                                    if (c.Dur < dur)
+                                        dur = c.Dur;
+                                }
+
+                                parContainer.Dur = dur;
+                            }
                         }
 
                         if (innerParTags.Count > 0)
@@ -235,7 +266,8 @@ namespace SMILParExemplo
                         Image image = new Image
                         {
                             Stretch = System.Windows.Media.Stretch.Uniform,
-                            Source = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value)))
+                            Source = new BitmapImage(new Uri(Path.Combine(dir, node.Attributes["src"].Value))),
+                            MaxWidth = 500
                         };
 
                         //Atribui no container
