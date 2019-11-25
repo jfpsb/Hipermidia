@@ -22,8 +22,8 @@ namespace AtvLab
                 string title = page.Split(new string[] { "<title>", "</title>" }, StringSplitOptions.RemoveEmptyEntries)[1];
                 string text = page.Split(new string[] { "<text>", "</text>" }, StringSplitOptions.RemoveEmptyEntries)[1];
 
-                string[] palavrasTitulo = title.Split(new char[] { ' ', ',', '\'', '"', '[', ']', '{', '}', '|' }, StringSplitOptions.RemoveEmptyEntries);
-                string[] palavrasTexto = text.Split(new char[] { ' ', ',', '\'', '"', '[', ']', '{', '}', '|' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] palavrasTitulo = title.Split(new char[] { '!', ' ', ',', '\'', '"', '[', ']', '{', '}', '(', ')', '|', '@', ':', '.' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] palavrasTexto = text.Split(new char[] { '!', ' ', ',', '\'', '"', '[', ']', '{', '}', '(', ')', '|', '@', ':', '.' }, StringSplitOptions.RemoveEmptyEntries);
 
                 foreach (string pt in palavrasTitulo)
                 {
