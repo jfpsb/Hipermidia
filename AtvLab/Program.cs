@@ -37,11 +37,12 @@ namespace AtvLab
 
                         if (paginas.ContainsKey(id))
                         {
-                            paginas[id].Pontos += 10;
+                            paginas[id].AddPontoTitulo();
                         }
                         else
                         {
-                            Pagina p = new Pagina() { Id = id, Pontos = 10 };
+                            Pagina p = new Pagina() { Id = id };
+                            p.AddPontoTitulo();
                             paginas.Add(id, p);
                         }
                     }
@@ -66,6 +67,7 @@ namespace AtvLab
 
                         if (paginas.ContainsKey(id))
                         {
+                            Pagina p = paginas[id];
                             paginas[id].AddPontoTexto();
                         }
                         else
@@ -90,7 +92,7 @@ namespace AtvLab
 
             while (true)
             {
-                Console.WriteLine("Pesquise uma Palavra: ");
+                Console.Write("Pesquise uma Palavra: ");
                 string palavra = Console.ReadLine();
                 palavra = palavra.ToLower();
 

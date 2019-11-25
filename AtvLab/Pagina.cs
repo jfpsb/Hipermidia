@@ -11,6 +11,11 @@ namespace AtvLab
         {
             Pontos += TxtPonto++;
         }
+
+        public void AddPontoTitulo()
+        {
+            Pontos += 10;
+        }
         public int Compare(Pagina x, Pagina y)
         {
             if(x.Pontos == y.Pontos)
