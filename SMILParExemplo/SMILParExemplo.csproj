@@ -64,6 +64,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Controller\Controller.cs" />
+    <Compile Include="Modelo\SMIL.cs" />
     <Compile Include="Modelo\Tag.cs" />
     <Compile Include="Sobre.xaml.cs">
       <DependentUpon>Sobre.xaml</DependentUpon>
@@ -113,8 +115,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Controller\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

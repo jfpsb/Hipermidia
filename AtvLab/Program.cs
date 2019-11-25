@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
-using System.Xml;
 
 namespace AtvLab
 {
@@ -14,7 +14,7 @@ namespace AtvLab
             string textoCollection = textoCompleto.Split(new string[] { "<collection>", "</collection>" }, StringSplitOptions.RemoveEmptyEntries)[0];
             string[] pages = textoCollection.Split(new string[] { "<page>", "</page>" }, StringSplitOptions.RemoveEmptyEntries);
 
-            Dictionary<string, List<string>> index = new Dictionary<string, List<string>>();
+            Dictionary<string, Dictionary<string, Pagina>> index = new Dictionary<string, Dictionary<string, Pagina>>();
 
             foreach (string page in pages)
             {
@@ -33,14 +33,24 @@ namespace AtvLab
 
                     if (index.ContainsKey(palavra))
                     {
-                        if (!index[palavra].Contains(id))
-                            index[palavra].Add(id);
+                        Dictionary<string, Pagina> paginas = index[palavra];
+
+                        if (paginas.ContainsKey(id))
+                        {
+                            paginas[id].Pontos += 10;
+                        }
+                        else
+                        {
+                            Pagina p = new Pagina() { Id = id, Pontos = 10 };
+                            paginas.Add(id, p);
+                        }
                     }
                     else
                     {
-                        List<string> lista = new List<string>();
-                        lista.Add(id);
-                        index.Add(palavra, lista);
+                        Dictionary<string, Pagina> paginas = new Dictionary<string, Pagina>();
+                        Pagina p = new Pagina() { Id = id, Pontos = 10 };
+                        paginas.Add(id, p);
+                        index.Add(palavra, paginas);
                     }
                 }
 
@@ -52,14 +62,26 @@ namespace AtvLab
 
                     if (index.ContainsKey(palavra))
                     {
-                        if (!index[palavra].Contains(id))
-                            index[palavra].Add(id);
+                        Dictionary<string, Pagina> paginas = index[palavra];
+
+                        if (paginas.ContainsKey(id))
+                        {
+                            paginas[id].AddPontoTexto();
+                        }
+                        else
+                        {
+                            Pagina p = new Pagina() { Id = id };
+                            p.AddPontoTexto();
+                            paginas.Add(id, p);
+                        }
                     }
                     else
                     {
-                        List<string> lista = new List<string>();
-                        lista.Add(id);
-                        index.Add(palavra, lista);
+                        Dictionary<string, Pagina> paginas = new Dictionary<string, Pagina>();
+                        Pagina p = new Pagina() { Id = id };
+                        p.AddPontoTexto();
+                        paginas.Add(id, p);
+                        index.Add(palavra, paginas);
                     }
                 }
             }
@@ -74,7 +96,13 @@ namespace AtvLab
 
                 if (index.ContainsKey(palavra))
                 {
-                    index[palavra].ForEach((s) => { Console.Write("[" + s + "] "); });
+                    List<Pagina> lista = index[palavra].Values.ToList();
+                    lista.Sort(new Pagina());
+                    foreach (var pagina in lista)
+                    {
+                        string output = "[Página: {0}, Pontos: {1}]";
+                        Console.WriteLine(string.Format(output, pagina.Id, pagina.Pontos));
+                    }
                 }
                 else
                 {

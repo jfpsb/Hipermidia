@@ -1,10 +1,10 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace AtvLab
 {
     public class Token
     {
-        public string Id { get; set; }
-        public string Title { get; set; }
+        public string Palavra;
+        public List<Pagina> Paginas = new List<Pagina>();
     }
 }
