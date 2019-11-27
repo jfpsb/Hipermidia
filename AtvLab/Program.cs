@@ -88,30 +88,78 @@ namespace AtvLab
                 }
             }
 
-            Console.WriteLine("DONE");
+            Console.WriteLine("INDEXAÇÃO COMPLETA");
 
             while (true)
             {
-                Console.Write("Pesquise uma Palavra: ");
-                string palavra = Console.ReadLine();
-                palavra = palavra.ToLower();
+                Console.Write("Pesquise Duas Palavras: ");
+                string[] palavras = Console.ReadLine().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (index.ContainsKey(palavra))
+                if (palavras.Length != 2)
                 {
-                    List<Pagina> lista = index[palavra].Values.ToList();
-                    lista.Sort(new Pagina());
-                    foreach (var pagina in lista)
+                    Console.WriteLine("Você Não Digitou Duas Palavras");
+                    continue;
+                }
+
+                string palavra1 = palavras[0].ToLower();
+                string palavra2 = palavras[1].ToLower();
+
+                Dictionary<string, Pagina> paginasPalavra1 = null;
+                Dictionary<string, Pagina> paginasPalavra2 = null;
+                Dictionary<string, Pagina> resultado = new Dictionary<string, Pagina>();
+
+                if (index.ContainsKey(palavra1) && index.ContainsKey(palavra2))
+                {
+                    paginasPalavra1 = index[palavra1];
+                    paginasPalavra2 = index[palavra2];
+
+                    foreach (var p1 in paginasPalavra1)
                     {
-                        string output = "[Página: {0}, Pontos: {1}]";
-                        Console.WriteLine(string.Format(output, pagina.Id, pagina.Pontos));
+                        if (paginasPalavra2.ContainsKey(p1.Key))
+                        {
+                            Pagina p2 = paginasPalavra2[p1.Key];
+                            Pagina newp = new Pagina() { Id = p1.Key, Pontos = p1.Value.Pontos + p2.Pontos };
+                            resultado.Add(p1.Key, newp);
+                            continue;
+                        }
                     }
+                }
+                else if (index.ContainsKey(palavra1))
+                {
+                    resultado = index[palavra1];
                 }
                 else
                 {
-                    Console.WriteLine("Essa Palavra Não Está Indexada");
+                    resultado = index[palavra2];
                 }
 
-                Console.WriteLine();
+                Imprimir(resultado, paginasPalavra1, paginasPalavra2);
+            }
+        }
+
+        private static void Imprimir(Dictionary<string, Pagina> resultado, Dictionary<string, Pagina> paginasPalavra1, Dictionary<string, Pagina> paginasPalavra2)
+        {
+            List<Pagina> resultadoLista = resultado.Values.ToList();
+            resultadoLista.Sort(new Pagina());
+
+            if (paginasPalavra1 != null)
+            {
+                List<Pagina> paginasPalavra1Lista = paginasPalavra1.Values.ToList();
+                paginasPalavra1Lista.Sort(new Pagina());
+                resultadoLista.AddRange(paginasPalavra1Lista);
+            }
+
+            if (paginasPalavra2 != null)
+            {
+                List<Pagina> paginasPalavra2Lista = paginasPalavra2.Values.ToList();
+                paginasPalavra2Lista.Sort(new Pagina());
+                resultadoLista.AddRange(paginasPalavra2Lista);
+            }
+
+            foreach (Pagina pagina in resultadoLista)
+            {
+                string output = "[Página: {0}, Pontos: {1}]";
+                Console.WriteLine(string.Format(output, pagina.Id, pagina.Pontos));
             }
         }
     }
